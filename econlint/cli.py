@@ -29,26 +29,57 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         dest="json_output",
         help="Output results as JSON",
     )
+    parser.add_argument(
+        "--disable",
+        type=str,
+        default="",
+        help="Disable specific rules (comma-separated, e.g., --disable=ECON001,ECON003)",
+    )
+    parser.add_argument(
+        "--exclude",
+        action="append",
+        default=[],
+        help="Exclude paths matching pattern (can be used multiple times)",
+    )
     return parser.parse_args(argv)
 
 
-def run_analysis(path: Path) -> list[Warning]:
-    """Run all rules on all discovered files."""
-    warnings: list[Warning] = []
+def get_enabled_rules(disabled: str) -> list:
+    """Get list of enabled rule classes based on disabled rules."""
+    if not disabled:
+        return ALL_RULES
 
-    for file_path in discover_files(path):
+    disabled_codes = {code.strip().upper() for code in disabled.split(",")}
+    return [rule for rule in ALL_RULES if rule.code not in disabled_codes]
+
+
+def run_analysis(
+    path: Path,
+    rules: list,
+    exclude_patterns: list[str]
+) -> tuple[list[Warning], dict[Path, list[str]]]:
+    """Run all rules on all discovered files.
+
+    Returns:
+        Tuple of (warnings, source_cache)
+    """
+    warnings: list[Warning] = []
+    source_cache: dict[Path, list[str]] = {}
+
+    for file_path in discover_files(path, exclude_patterns):
         result = parse_file(file_path)
         if result is None:
             continue
 
         tree, source = result
+        source_cache[file_path] = source.splitlines()
 
-        for rule_class in ALL_RULES:
+        for rule_class in rules:
             rule = rule_class(file_path, source)
             rule.visit(tree)
             warnings.extend(rule.warnings)
 
-    return warnings
+    return warnings, source_cache
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -60,8 +91,9 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     try:
-        warnings = run_analysis(args.path)
-        warnings = filter_suppressed(warnings)
+        rules = get_enabled_rules(args.disable)
+        warnings, source_cache = run_analysis(args.path, rules, args.exclude)
+        warnings = filter_suppressed(warnings, source_cache)
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         return 2

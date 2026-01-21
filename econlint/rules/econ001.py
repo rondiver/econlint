@@ -6,10 +6,39 @@ import re
 from econlint.rules.base import BaseRule
 
 
-# Patterns that indicate external calls
-HTTP_PREFIXES = ("requests.", "httpx.", "aiohttp.", "urllib.request.")
-DB_PATTERNS = ("cursor.execute", "session.execute", "connection.execute")
-GENERIC_PATTERNS = re.compile(r"(client|api|service|connection)", re.IGNORECASE)
+# HTTP methods that are actually network calls (not list methods like append)
+HTTP_METHODS = {"get", "post", "put", "patch", "delete", "head", "options", "request"}
+
+# Explicit external call prefixes (known HTTP/API libraries)
+HTTP_LIBRARY_PREFIXES = (
+    "httpx.", "aiohttp.", "urllib.request.", "http.client.",
+    "urllib3.", "asks.", "treq.", "grequests.",
+)
+
+# Explicit external call methods (full match)
+EXTERNAL_METHODS = {
+    # Database
+    "cursor.execute", "cursor.executemany", "cursor.fetchone", "cursor.fetchall",
+    "cursor.fetchmany", "connection.execute", "session.execute", "session.query",
+    # AWS boto3 common operations
+    "s3.get_object", "s3.put_object", "s3.delete_object",
+    "dynamodb.get_item", "dynamodb.put_item", "dynamodb.query",
+    "sqs.send_message", "sqs.receive_message",
+    "sns.publish",
+}
+
+# Patterns for receivers that suggest external API clients
+# More conservative than before - requires suffix pattern
+EXTERNAL_RECEIVER_SUFFIXES = re.compile(
+    r"(_client|_api|_service|_connection|_session|Client|Api|Service)$"
+)
+
+# Methods that are typically external API calls when on a client-like receiver
+API_METHODS = {
+    "get", "post", "put", "patch", "delete", "head", "options",  # HTTP verbs
+    "request", "send", "fetch", "call", "invoke", "execute",  # Generic API methods
+    "query", "read", "write", "create", "update", "remove",  # CRUD operations
+}
 
 
 class ECON001(BaseRule):
@@ -31,19 +60,35 @@ class ECON001(BaseRule):
         if not call_name:
             return False, ""
 
-        # HTTP libraries
-        for prefix in HTTP_PREFIXES:
+        # Check HTTP library prefixes
+        for prefix in HTTP_LIBRARY_PREFIXES:
             if call_name.startswith(prefix):
                 return True, call_name
 
-        # Database patterns
-        for pattern in DB_PATTERNS:
-            if pattern in call_name:
+        # Special handling for 'requests' library (could conflict with list variable named 'requests')
+        if call_name.startswith("requests."):
+            method = call_name.split(".")[-1].lower()
+            if method in HTTP_METHODS:
                 return True, call_name
 
-        # Generic patterns (client, api, service, connection)
-        if GENERIC_PATTERNS.search(call_name):
-            return True, call_name
+        # Check explicit external methods
+        for method in EXTERNAL_METHODS:
+            if call_name.endswith(method):
+                return True, call_name
+
+        # Check for client-like receivers with API methods
+        parts = call_name.rsplit(".", 1)
+        if len(parts) == 2:
+            receiver, method = parts
+            # Check if receiver looks like an API client
+            if EXTERNAL_RECEIVER_SUFFIXES.search(receiver):
+                # Any method call on a *_client, *_api, etc. is suspicious
+                return True, call_name
+            # Check if it's an API method on something that might be a client
+            if method.lower() in API_METHODS:
+                # Only flag if the receiver name suggests it's a client
+                if EXTERNAL_RECEIVER_SUFFIXES.search(receiver):
+                    return True, call_name
 
         return False, call_name
 

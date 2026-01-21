@@ -55,3 +55,7 @@ class BaseRule(ast.NodeVisitor):
         elif isinstance(node, ast.Subscript):
             return self._get_expr_name(node.value) + "[]"
         return ""
+
+    def has_keyword(self, node: ast.Call, keyword: str) -> bool:
+        """Check if a Call node has a specific keyword argument."""
+        return any(kw.arg == keyword for kw in node.keywords)

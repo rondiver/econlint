@@ -1,8 +1,12 @@
 """ECON004: Unbounded fan-out."""
 
 import ast
+import re
 
 from econlint.rules.base import BaseRule
+
+# Pattern to detect Semaphore instantiation in code
+SEMAPHORE_PATTERN = re.compile(r"\bSemaphore\s*\(")
 
 
 class ECON004(BaseRule):
@@ -13,21 +17,16 @@ class ECON004(BaseRule):
 
     def __init__(self, file_path, source):
         super().__init__(file_path, source)
-        self._has_semaphore = False
-        self._check_for_semaphore()
+        self._has_semaphore = self._check_for_semaphore()
 
-    def _check_for_semaphore(self) -> None:
+    def _check_for_semaphore(self) -> bool:
         """Check if the module uses a Semaphore."""
-        # Look for Semaphore instantiation patterns in actual code
-        # This checks for: Semaphore(, asyncio.Semaphore(, BoundedSemaphore(
-        import re
-        # Match Semaphore calls that aren't in comments
         for line in self.source_lines:
             # Skip comment-only lines
             code_part = line.split("#")[0]
-            if re.search(r"\bSemaphore\s*\(", code_part):
-                self._has_semaphore = True
-                return
+            if SEMAPHORE_PATTERN.search(code_part):
+                return True
+        return False
 
     def visit_Call(self, node: ast.Call) -> None:
         """Check for unbounded fan-out patterns."""
@@ -43,7 +42,7 @@ class ECON004(BaseRule):
 
         # ThreadPoolExecutor without max_workers
         if call_name in ("ThreadPoolExecutor", "concurrent.futures.ThreadPoolExecutor"):
-            if not self._has_keyword(node, "max_workers"):
+            if not self.has_keyword(node, "max_workers"):
                 self.add_warning(
                     node,
                     "ThreadPoolExecutor() without max_workers"
@@ -51,7 +50,7 @@ class ECON004(BaseRule):
 
         # ProcessPoolExecutor without max_workers
         if call_name in ("ProcessPoolExecutor", "concurrent.futures.ProcessPoolExecutor"):
-            if not self._has_keyword(node, "max_workers"):
+            if not self.has_keyword(node, "max_workers"):
                 self.add_warning(
                     node,
                     "ProcessPoolExecutor() without max_workers"
@@ -59,7 +58,7 @@ class ECON004(BaseRule):
 
         # multiprocessing.Pool without processes limit
         if call_name in ("Pool", "multiprocessing.Pool"):
-            if not node.args and not self._has_keyword(node, "processes"):
+            if not node.args and not self.has_keyword(node, "processes"):
                 self.add_warning(
                     node,
                     "multiprocessing.Pool() without processes limit"
@@ -73,7 +72,3 @@ class ECON004(BaseRule):
             if isinstance(arg, ast.Starred):
                 return True
         return False
-
-    def _has_keyword(self, node: ast.Call, keyword: str) -> bool:
-        """Check if a Call has a specific keyword argument."""
-        return any(kw.arg == keyword for kw in node.keywords)

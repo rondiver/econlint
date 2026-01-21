@@ -22,12 +22,12 @@ class ECON002(BaseRule):
 
         # Check tenacity @retry without stop=
         if call_name in ("retry", "tenacity.retry"):
-            if not self._has_keyword(node, "stop"):
+            if not self.has_keyword(node, "stop"):
                 self.add_warning(node, f"{call_name}() without stop= parameter")
 
         # Check retrying @retry without stop_max_attempt_number
         if call_name in ("retrying.retry", "Retrying"):
-            if not self._has_keyword(node, "stop_max_attempt_number"):
+            if not self.has_keyword(node, "stop_max_attempt_number"):
                 self.add_warning(
                     node, f"{call_name}() without stop_max_attempt_number"
                 )
@@ -44,10 +44,6 @@ class ECON002(BaseRule):
                     )
 
         self.generic_visit(node)
-
-    def _has_keyword(self, node: ast.Call, keyword: str) -> bool:
-        """Check if a Call has a specific keyword argument."""
-        return any(kw.arg == keyword for kw in node.keywords)
 
     def _is_while_true(self, node: ast.While) -> bool:
         """Check if this is a while True loop."""
