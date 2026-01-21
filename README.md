@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/header.svg" alt="econlint" width="800">
+</p>
+
 # econlint
 
 A Python linter that finds code patterns that get expensive at scale.

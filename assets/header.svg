@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="320" viewBox="0 0 800 320">
+  <style>
+    .bg { fill: #0d1117; }
+    .border { fill: none; stroke: #30363d; stroke-width: 1; }
+    .ascii { fill: #58a6ff; font-family: 'Consolas', 'Monaco', monospace; font-size: 14px; }
+    .key { fill: #ff7b72; font-family: 'Consolas', 'Monaco', monospace; font-size: 14px; }
+    .value { fill: #c9d1d9; font-family: 'Consolas', 'Monaco', monospace; font-size: 14px; }
+    .dim { fill: #6e7681; font-family: 'Consolas', 'Monaco', monospace; font-size: 14px; }
+    .title { fill: #58a6ff; font-family: 'Consolas', 'Monaco', monospace; font-size: 16px; font-weight: bold; }
+    .green { fill: #3fb950; }
+    .yellow { fill: #d29922; }
+    .red { fill: #f85149; }
+  </style>
+
+  <rect class="bg" width="800" height="320" rx="8" ry="8"/>
+  <rect class="border" x="0.5" y="0.5" width="799" height="319" rx="8" ry="8"/>
+
+  <!-- ASCII Art - Dollar sign made of code -->
+  <text class="ascii" x="40" y="50">    ╔═══════════════╗</text>
+  <text class="ascii" x="40" y="68">    ║   ▄▄▄▄▄▄▄▄   ║</text>
+  <text class="ascii" x="40" y="86">    ║  █ ╔═══╗ █   ║</text>
+  <text class="ascii" x="40" y="104">    ║  █ ║ $ ║ █   ║</text>
+  <text class="ascii" x="40" y="122">    ║  █ ╠═══╣ █   ║</text>
+  <text class="ascii" x="40" y="140">    ║  █ ║ $ ║ █   ║</text>
+  <text class="ascii" x="40" y="158">    ║  █ ╚═══╝ █   ║</text>
+  <text class="ascii" x="40" y="176">    ║   ▀▀▀▀▀▀▀▀   ║</text>
+  <text class="ascii" x="40" y="194">    ╚═══════════════╝</text>
+  <text class="dim" x="40" y="224">    catch bills, not bugs</text>
+
+  <!-- Info Section -->
+  <text class="title" x="300" y="50">econlint</text>
+  <text class="dim" x="300" y="68">─────────────────────────────────────</text>
+
+  <text class="key" x="300" y="95">purpose</text>
+  <text class="dim" x="370" y="95">........</text>
+  <text class="value" x="440" y="95">find expensive code patterns</text>
+
+  <text class="key" x="300" y="118">lang</text>
+  <text class="dim" x="370" y="118">...........</text>
+  <text class="value" x="440" y="118">python 3.10+</text>
+
+  <text class="key" x="300" y="141">deps</text>
+  <text class="dim" x="370" y="141">...........</text>
+  <text class="value" x="440" y="141">zero (stdlib only)</text>
+
+  <text class="key" x="300" y="164">rules</text>
+  <text class="dim" x="370" y="164">..........</text>
+  <text class="value" x="440" y="164">ECON001-004</text>
+
+  <text class="dim" x="300" y="194">─────────────────────────────────────</text>
+
+  <text class="key" x="300" y="220">detects</text>
+  <text class="dim" x="370" y="220">........</text>
+  <text class="yellow" x="440" y="220">api calls in loops</text>
+
+  <text x="440" y="243"><tspan class="yellow">unbounded retries</tspan></text>
+  <text x="440" y="266"><tspan class="yellow">n+1 query patterns</tspan></text>
+  <text x="440" y="289"><tspan class="yellow">unlimited concurrency</tspan></text>
+
+  <!-- Terminal prompt at bottom -->
+  <text class="green" x="40" y="300">$</text>
+  <text class="value" x="55" y="300">python -m econlint .</text>
+  <text class="dim" x="220" y="300">│</text>
+</svg>
